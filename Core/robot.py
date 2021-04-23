@@ -1,6 +1,5 @@
-import random
-
-from numpy import cos, sin, arange
+from numpy import cos, sin
+from numpy.random import uniform, normal
 import matplotlib.pyplot as plt
 
 from Core.constants import ROBOT_SIZE, LINE_WIDTH, CIRCLE_WIDTH, ROBOT_COLORS
@@ -138,24 +137,10 @@ class Robot:
     # Tasks:
     #   Draw the samples poses of robots at the final step
     def draw_samples(self, s, e, steps=1, samples=100):
-        # error sample sets:
-        # e_rot1 = [e[0], - e[0]]
-        # e_trans = [e[1], - e[1]]
-        # e_rot2 = [e[2], - e[2]]
-        e_rot1 = arange(-e[0], e[0], 0.1).tolist()
-        e_trans = arange(-e[1], e[1], 0.1).tolist()
-        e_rot2 = arange(-e[2], e[2], 0.1).tolist()
-
-        end_poses = []
-        for i in range(samples):
-            p = self.initial_pose
-            for i in range(steps):
-                s_sample = (s[0] + random.sample(k=1, population=e_rot1)[0],
-                            s[1] + random.sample(k=1, population=e_trans)[0],
-                            s[2] + random.sample(k=1, population=e_rot2)[0])
-                p = perform_motion(pose=p, action=s_sample)
-            end_poses.append(p)
-
+        
+        # apply the ditribution
+        end_poses = self.__normal_distribution(s, e, steps, samples)
+            
         # plot start pose:
         self.draw_robot(self.initial_pose)
         # plot samples:
@@ -167,3 +152,35 @@ class Robot:
         adjust_graph(figure_axes=self.figure_axes, title=title)
         # Initialize new Figure
         self.fig, self.figure_axes = plt.subplots()
+
+    def __normal_distribution(self, s, e, steps, samples):
+        sigma_rot1 = e[0] / 3
+        sigma_trans = e[1] / 3
+        sigma_rot2 = e[2] / 3
+
+        end_poses = []
+        for i in range(samples):
+            p = self.initial_pose
+            for i in range(steps):
+                s_sample = (s[0] + normal(0, sigma_rot1, 1)[0],
+                            s[1] + normal(0, sigma_trans, 1)[0],
+                            s[2] + normal(0, sigma_rot2, 1)[0])
+                p = perform_motion(pose=p, action=s_sample)
+            end_poses.append(p)
+        return end_poses
+
+    def __uniform_distribution(self, s, e, steps, samples):
+        e_rot1 = e[0]
+        e_trans = e[1]
+        e_rot2 = e[2]
+        
+        end_poses = []
+        for i in range(samples):
+            p = self.initial_pose
+            for i in range(steps):
+                s_sample = (s[0] + uniform(-e_rot1, e_rot1, 1)[0],
+                            s[1] + uniform(-e_trans, e_trans, 1)[0],
+                            s[2] + uniform(-e_rot2, e_rot2, 1)[0])
+                p = perform_motion(pose=p, action=s_sample)
+            end_poses.append(p)
+        return end_poses
